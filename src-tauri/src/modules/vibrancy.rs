@@ -1,5 +1,9 @@
 use serde::Serialize;
 
+/// Keep in sync with `--window-radius` in `src/styles/globals.css`.
+#[cfg(target_os = "macos")]
+const WINDOW_RADIUS: f64 = 25.0;
+
 /// The translucent window backdrop a platform can provide.
 ///
 /// Linux is `None` on purpose: blur there is owned by the compositor, not the
@@ -41,7 +45,7 @@ fn set_backdrop(window: &tauri::Window, enabled: bool) -> Result<(), String> {
             window,
             NSVisualEffectMaterial::UnderWindowBackground,
             None,
-            None,
+            Some(WINDOW_RADIUS),
         )
         .map_err(|e| e.to_string())
     } else {

@@ -6,11 +6,11 @@ import ReactDOM from "react-dom/client";
 import { usePreferencesStore } from "@/modules/settings/preferences";
 import App from "./app/App";
 import { initLaunchDir } from "./lib/launchDir";
-import { USE_CUSTOM_WINDOW_CONTROLS } from "./lib/platform";
+import { WINDOW_CHROME } from "./lib/platform";
 import { terminalDiagnosticsEnabled } from "@/modules/terminal/lib/terminalDiagnosticsEnabled";
 
-if (USE_CUSTOM_WINDOW_CONTROLS) {
-  document.documentElement.dataset.chrome = "borderless";
+if (WINDOW_CHROME) {
+  document.documentElement.dataset.chrome = WINDOW_CHROME;
 }
 
 // Render-instrumentation overlay, opt-in: `VITE_REACT_SCAN=true pnpm dev`.

@@ -1,4 +1,5 @@
 export { AppAlphaBridge } from "./AppAlphaBridge";
+export { WindowShapeBridge } from "./WindowShapeBridge";
 export { ThemeProvider, useTheme, type Theme } from "./ThemeProvider";
 export {
   resolveTerminalFont,

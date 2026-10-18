@@ -58,6 +58,7 @@ import {
   AppAlphaBridge,
   ThemeProvider,
   useThemeFileEditing,
+  WindowShapeBridge,
 } from "@/modules/theme";
 import { UpdaterDialog } from "@/modules/updater";
 import { useWorkspaceEnvStore } from "@/modules/workspace";
@@ -974,6 +975,7 @@ export default function App() {
           )}
 
           <AppAlphaBridge />
+          <WindowShapeBridge />
 
           <Toaster position="bottom-right" />
 

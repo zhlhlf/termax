@@ -231,7 +231,8 @@ html[data-vibrancy="on"] {
   --frame: color-mix(in oklab, var(--card) 55%, transparent);
 }
 
-html[data-chrome="borderless"] .terax-bg-surface {
+html[data-chrome="borderless"] .terax-bg-surface,
+html[data-chrome="native"] .terax-bg-surface {
   border-radius: var(--window-radius);
 }
 .zoom-content {
@@ -261,6 +262,24 @@ html[data-chrome="borderless"] #root {
 }
 html[data-chrome="borderless"] #settings-root {
   border: 0;
+}
+
+/* macOS keeps the native titlebar and traffic lights, so its window server
+ * applies the system corner radius. Paint a transparent webview base and clip
+ * the app surface ourselves to keep the configured radius consistent. */
+html[data-chrome="native"],
+html[data-chrome="native"] body {
+  background: transparent !important;
+}
+html[data-chrome="native"] #root {
+  height: 100%;
+  border-radius: var(--window-radius);
+  overflow: hidden;
+}
+
+html[data-window-shape="fullscreen"] #root,
+html[data-window-shape="fullscreen"] .terax-bg-surface {
+  border-radius: 0;
 }
 
 /* No background image: the shell paints a single translucent backdrop instead

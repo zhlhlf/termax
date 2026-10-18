@@ -8,9 +8,17 @@ const PLATFORM = (() => {
   }
 })();
 
+export type WindowChrome = "borderless" | "native";
+
+export function windowChromeFor(platformName: string): WindowChrome | null {
+  if (!platformName) return null;
+  return platformName === "macos" ? "native" : "borderless";
+}
+
 export const IS_MAC = PLATFORM === "macos";
 export const IS_LINUX = PLATFORM === "linux";
 export const IS_WINDOWS = PLATFORM === "windows";
+export const WINDOW_CHROME = windowChromeFor(PLATFORM);
 
 /** Custom window controls (min/max/close) are rendered by us only on
  * non-macOS platforms — macOS keeps the native traffic lights via the
