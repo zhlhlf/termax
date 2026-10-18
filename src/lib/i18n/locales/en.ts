@@ -489,22 +489,6 @@ export const en = {
     "Save or close unsaved editor tabs before switching workspace.",
 
 
-  // ── Language server status pill ──
-  "lsp.pill.name": "{name} LSP",
-  "lsp.pill.enable": "Enable {name} LSP",
-  "lsp.pill.enableTitle": "Start {command} for this workspace",
-  "lsp.pill.install": "Install {name} LSP",
-  "lsp.pill.serverName": "{name} language server",
-  "lsp.pill.stopped": "Language server stopped",
-  "lsp.pill.stoppedTitle": "{name} language server stopped",
-  "lsp.pill.starting": "Language server starting",
-  "lsp.pill.active": "Language server active",
-  "lsp.pill.runningStarting": "{command} is starting for this workspace.",
-  "lsp.pill.running": "{command} is running for this workspace.",
-  "lsp.pill.restart": "Restart",
-  "lsp.pill.disable": "Disable",
-  "lsp.pill.dismiss": "Dismiss (you can re-enable from Settings)",
-  "lsp.pill.copyCommand": "Copy command",
   "lsp.toast.failedToStart": "{name} language server failed to start",
   "lsp.toast.stopped": "{name} language server stopped",
   "lsp.toast.keepsCrashing": "{name} language server keeps crashing",
@@ -582,7 +566,7 @@ export const en = {
   "editor.format.skippedNoFormatter":
     "The active language server has no formatter. Pick an external one in Settings (Ruff for Python, Prettier, rustfmt, ...).",
   "editor.format.skippedNoServer":
-    "No active language server for this file. Enable one in the statusbar, or pick an external formatter in Settings.",
+    "No active language server for this file. Enable one in Settings, or pick an external formatter.",
   "editor.format.noCommand": "No custom format command configured in Settings.",
   "editor.format.timedOut": "{formatter} timed out",
   "editor.format.failed": "{formatter} format failed",

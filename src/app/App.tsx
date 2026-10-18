@@ -31,7 +31,6 @@ import {
   useSpaces,
   useSpacesBoot,
 } from "@/modules/spaces";
-import { StatusBar } from "@/modules/statusbar";
 import {
   TabSwitcherHud,
   type CloseTabsPlan,
@@ -468,9 +467,6 @@ export default function App() {
         activeTab.cwd ??
         null)
       : null;
-
-  const activeFilePath =
-    activeTab?.kind === "editor" ? activeTab.path : null;
 
   const openPreviewTab = useCallback(
     (url: string) => {
@@ -969,10 +965,6 @@ export default function App() {
                   </div>
                 </div>
           </main>
-
-          {!zenMode && (
-            <StatusBar filePath={activeFilePath} />
-          )}
 
           <AppAlphaBridge />
           <WindowShapeBridge />

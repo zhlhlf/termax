@@ -483,22 +483,6 @@ export const zhCN: Record<keyof typeof en, string> = {
   "app.workspace.dirtySwitch": "切换工作区前请保存或关闭未保存的编辑器标签页。",
 
 
-  // ── Language server status pill ──
-  "lsp.pill.name": "{name} LSP",
-  "lsp.pill.enable": "启用 {name} LSP",
-  "lsp.pill.enableTitle": "为此工作区启动 {command}",
-  "lsp.pill.install": "安装 {name} LSP",
-  "lsp.pill.serverName": "{name} 语言服务器",
-  "lsp.pill.stopped": "语言服务器已停止",
-  "lsp.pill.stoppedTitle": "{name} 语言服务器已停止",
-  "lsp.pill.starting": "语言服务器正在启动",
-  "lsp.pill.active": "语言服务器已激活",
-  "lsp.pill.runningStarting": "{command} 正在为此工作区启动。",
-  "lsp.pill.running": "{command} 正在为此工作区运行。",
-  "lsp.pill.restart": "重启",
-  "lsp.pill.disable": "禁用",
-  "lsp.pill.dismiss": "忽略（可在设置中重新启用）",
-  "lsp.pill.copyCommand": "复制命令",
   "lsp.toast.failedToStart": "{name} 语言服务器启动失败",
   "lsp.toast.stopped": "{name} 语言服务器已停止",
   "lsp.toast.keepsCrashing": "{name} 语言服务器反复崩溃",
@@ -571,7 +555,7 @@ export const zhCN: Record<keyof typeof en, string> = {
   "editor.format.skippedNoFormatter":
     "当前语言服务器没有格式化器。请在设置中选择一个外部格式化器（Python 用 Ruff、Prettier、rustfmt 等）。",
   "editor.format.skippedNoServer":
-    "此文件没有激活的语言服务器。请在状态栏启用一个，或在设置中选择外部格式化器。",
+    "此文件没有激活的语言服务器。请在设置中启用一个，或选择外部格式化器。",
   "editor.format.noCommand": "设置中未配置自定义格式化命令。",
   "editor.format.timedOut": "{formatter} 超时",
   "editor.format.failed": "{formatter} 格式化失败",

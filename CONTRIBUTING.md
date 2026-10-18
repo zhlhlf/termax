@@ -217,7 +217,6 @@ src/                        React frontend
     sidebar/                Activity bar and side panels
     source-control/         Source control panel
     spaces/                 Workspace spaces/projects with per-space tab persistence
-    statusbar/              Bottom bar and cwd breadcrumb
     tabs/                   Tab/split model
     terminal/               xterm.js sessions, OSC handlers, renderer pool
     theme/                  Custom theme engine and presets

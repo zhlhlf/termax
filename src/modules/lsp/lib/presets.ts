@@ -291,7 +291,7 @@ export function serversForLanguage(
 
 // Several presets can claim a language (pyright and ruff both take `py`).
 // The enabled one wins; among untouched candidates the first non-dismissed
-// is offered by the statusbar hint. Preset order breaks remaining ties.
+// is selected. Preset order breaks remaining ties.
 export function serverForLanguage(
   langId: string | null,
   custom: LspCustomServer[],
