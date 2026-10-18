@@ -944,7 +944,7 @@ export default function App() {
           )}
 
           <main className="zoom-content flex min-h-0 flex-1 flex-col">
-            <div className="h-full min-h-0 px-2">
+            <div className="h-full min-h-0 px-0.5">
                   <div className="terax-pane flex h-full min-h-0 flex-col">
                     <div className="relative min-h-0 flex-1">
                       <WorkspaceSurface
