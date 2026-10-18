@@ -64,7 +64,7 @@ export function WorkspaceSurface({
       <div
         className={cn(
           LAYER,
-          "px-3 pt-2 pb-2",
+          "px-3 pt-2 pb-0.5",
           !isTerminalTab && "invisible pointer-events-none",
         )}
         aria-hidden={!isTerminalTab}
