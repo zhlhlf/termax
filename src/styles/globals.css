@@ -271,13 +271,18 @@ html[data-chrome="native"],
 html[data-chrome="native"] body {
   background: transparent !important;
 }
-html[data-chrome="native"] #root {
+html[data-chrome="native"] #root,
+html[data-chrome="native"] #settings-root {
   height: 100%;
   border-radius: var(--window-radius);
   overflow: hidden;
 }
+html[data-chrome="native"] #settings-root {
+  background: var(--frame);
+}
 
 html[data-window-shape="fullscreen"] #root,
+html[data-window-shape="fullscreen"] #settings-root,
 html[data-window-shape="fullscreen"] .terax-bg-surface {
   border-radius: 0;
 }
