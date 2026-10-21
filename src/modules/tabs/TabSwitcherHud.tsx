@@ -31,9 +31,9 @@ export function TabSwitcherHud({
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center"
+      className="pointer-events-none fixed inset-x-0 top-11 z-[100] flex justify-center px-3"
     >
-      <div className="flex max-h-[60vh] w-72 flex-col gap-0.5 overflow-y-auto rounded-2xl border border-border bg-popover/95 p-1.5 shadow-2xl ring-1 ring-foreground/5 backdrop-blur-md">
+      <div className="flex max-h-[calc(100vh-4rem)] w-72 flex-col gap-0.5 overflow-y-auto rounded-2xl border border-border bg-popover/95 p-1.5 shadow-2xl ring-1 ring-foreground/5 backdrop-blur-md">
         {rows.map((t) => {
           const subtitle = subtitleFor(t);
           return (
