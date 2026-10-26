@@ -3,15 +3,27 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("./terminalSessionApi", () => ({
   clearLeafSelection: vi.fn(),
   leafGridSelection: vi.fn(),
+  pasteIntoSession: vi.fn(),
 }));
-vi.mock("./terminalClipboard", () => ({ writeTerminalClipboard: vi.fn() }));
+vi.mock("./terminalClipboard", () => ({
+  readTerminalClipboard: vi.fn(),
+  writeTerminalClipboard: vi.fn(),
+}));
 
-import { writeTerminalClipboard } from "./terminalClipboard";
+import {
+  readTerminalClipboard,
+  writeTerminalClipboard,
+} from "./terminalClipboard";
 import {
   copyTerminalSelection,
+  handleTerminalRightClick,
   shouldHandleTerminalRightClick,
 } from "./terminalRightClick";
-import { clearLeafSelection, leafGridSelection } from "./terminalSessionApi";
+import {
+  clearLeafSelection,
+  leafGridSelection,
+  pasteIntoSession,
+} from "./terminalSessionApi";
 
 function contextClick(overrides: Partial<MouseEvent> = {}) {
   return { defaultPrevented: false, shiftKey: false, ...overrides };
@@ -19,6 +31,8 @@ function contextClick(overrides: Partial<MouseEvent> = {}) {
 
 const selection = vi.mocked(leafGridSelection);
 const clearSelection = vi.mocked(clearLeafSelection);
+const paste = vi.mocked(pasteIntoSession);
+const readClipboard = vi.mocked(readTerminalClipboard);
 const writeClipboard = vi.mocked(writeTerminalClipboard);
 
 describe("terminal right-click", () => {
@@ -72,5 +86,45 @@ describe("terminal right-click", () => {
 
     await expect(copyTerminalSelection(7)).resolves.toBe(false);
     expect(clearSelection).not.toHaveBeenCalled();
+  });
+
+  it("copies instead of pasting when text is selected", async () => {
+    selection.mockReturnValue("selected output");
+    writeClipboard.mockResolvedValue(undefined);
+    readClipboard.mockResolvedValue("clipboard text");
+
+    await expect(handleTerminalRightClick(7)).resolves.toBe(true);
+    expect(writeClipboard).toHaveBeenCalledWith("selected output");
+    expect(readClipboard).not.toHaveBeenCalled();
+    expect(paste).not.toHaveBeenCalled();
+  });
+
+  it("pastes the clipboard when nothing is selected", async () => {
+    selection.mockReturnValue(null);
+    readClipboard.mockResolvedValue("clipboard text");
+    paste.mockReturnValue(true);
+
+    await expect(handleTerminalRightClick(7)).resolves.toBe(true);
+    expect(readClipboard).toHaveBeenCalledOnce();
+    expect(paste).toHaveBeenCalledWith(7, "clipboard text");
+    expect(writeClipboard).not.toHaveBeenCalled();
+  });
+
+  it("does nothing when there is no selection or clipboard text", async () => {
+    selection.mockReturnValue(null);
+    readClipboard.mockResolvedValue("");
+
+    await expect(handleTerminalRightClick(7)).resolves.toBe(false);
+    expect(paste).not.toHaveBeenCalled();
+  });
+
+  it("does not paste when copying the selection fails", async () => {
+    selection.mockReturnValue("selected output");
+    writeClipboard.mockRejectedValue(new Error("clipboard unavailable"));
+    readClipboard.mockResolvedValue("clipboard text");
+
+    await expect(handleTerminalRightClick(7)).resolves.toBe(false);
+    expect(readClipboard).not.toHaveBeenCalled();
+    expect(paste).not.toHaveBeenCalled();
   });
 });

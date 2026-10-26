@@ -16,7 +16,7 @@ import type { TerminalBackendKind } from "./backend/contracts";
 import { resolvedTerminalBackend } from "./backend/selection";
 import { useGhosttyTerminalSession } from "./ghostty/useGhosttyTerminalSession";
 import {
-  copyTerminalSelection,
+  handleTerminalRightClick,
   shouldHandleTerminalRightClick,
 } from "./lib/terminalRightClick";
 
@@ -101,7 +101,7 @@ const GhosttyTerminalPane = memo(
         )
           return;
         event.preventDefault();
-        void copyTerminalSelection(leafId);
+        void handleTerminalRightClick(leafId);
       };
       const handleContextMenu = (event: MouseEvent) => {
         event.preventDefault();
