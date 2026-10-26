@@ -2,8 +2,8 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -13,6 +13,7 @@ jobs:
       id-token: write
     outputs:
       updater_signing: ${{ steps.updater-signing.outputs.enabled }}
+      version: ${{ steps.version.outputs.value }}
     strategy:
       fail-fast: false
       matrix:
@@ -76,6 +77,11 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+
+      - name: Read release version
+        id: version
+        shell: bash
+        run: echo "value=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -174,8 +180,8 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "Termax ${{ github.ref_name }}"
+          tagName: v${{ steps.version.outputs.value }}
+          releaseName: v${{ steps.version.outputs.value }}
           releaseBody: "See the assets to download and install. Auto-update is built in."
           releaseDraft: true
           prerelease: false
@@ -191,8 +197,8 @@ jobs:
           APPLE_SIGNING_IDENTITY: "-"
 
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "Termax ${{ github.ref_name }}"
+          tagName: v${{ steps.version.outputs.value }}
+          releaseName: v${{ steps.version.outputs.value }}
           releaseBody: "See the assets to download and install. Auto-update is built in."
           releaseDraft: true
           prerelease: false
@@ -204,10 +210,11 @@ jobs:
       # Worm:Win32/AutoRun family trips over. Produced regardless of signing
       # state, so it is always available as the fallback download.
       - name: Package portable Windows zip
-        if: matrix.platform == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
+        if: matrix.platform == 'windows-latest'
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: v${{ steps.version.outputs.value }}
         run: |
           $ErrorActionPreference = "Stop"
           $releaseDir = "src-tauri/target/${{ matrix.rust-target }}/release"
@@ -243,7 +250,7 @@ jobs:
           } finally { $archive.Dispose() }
 
           Write-Host "Packaged $zip ($((Get-Item $zip).Length) bytes)"
-          gh release upload $env:GITHUB_REF_NAME $zip --clobber --repo $env:GITHUB_REPOSITORY
+          gh release upload $env:RELEASE_TAG $zip --clobber --repo $env:GITHUB_REPOSITORY
 
       # Strip the bundled libwayland-* libs from the AppImage so it loads the
       # host copies at runtime. The Ubuntu 22.04 build host ships libwayland
@@ -257,9 +264,10 @@ jobs:
       # patch-appimage-updater job after all matrix legs finish, so a parallel
       # macOS/Windows upload cannot clobber the combined latest.json.
       - name: Fix AppImage wayland libs and re-sign
-        if: matrix.platform == 'ubuntu-22.04' && startsWith(github.ref, 'refs/tags/') && steps.updater-signing.outputs.enabled == 'true'
+        if: matrix.platform == 'ubuntu-22.04' && steps.updater-signing.outputs.enabled == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: v${{ steps.version.outputs.value }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
@@ -309,7 +317,7 @@ jobs:
           rm -f "$APPIMAGE.sig"
           pnpm tauri signer sign "$APPIMAGE"
 
-          TAG="${GITHUB_REF_NAME}"
+          TAG="$RELEASE_TAG"
           gh release upload "$TAG" "$APPIMAGE" "$APPIMAGE.sig" \
             --clobber --repo "$GITHUB_REPOSITORY"
 
@@ -322,7 +330,7 @@ jobs:
       # patch-updater-manifest job, after every matrix leg has merged, so a
       # parallel macOS/Linux upload cannot clobber the Windows signatures.
       - name: Stage Windows installers for SignPath
-        if: matrix.platform == 'windows-latest' && startsWith(github.ref, 'refs/tags/') && steps.windows-signing.outputs.enabled == 'true'
+        if: matrix.platform == 'windows-latest' && steps.windows-signing.outputs.enabled == 'true'
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
@@ -340,7 +348,7 @@ jobs:
 
       - name: Upload unsigned Windows artifact
         id: upload-windows
-        if: matrix.platform == 'windows-latest' && startsWith(github.ref, 'refs/tags/') && steps.windows-signing.outputs.enabled == 'true'
+        if: matrix.platform == 'windows-latest' && steps.windows-signing.outputs.enabled == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: windows-unsigned
@@ -351,7 +359,7 @@ jobs:
       # The default wait timeout is 600s; bumped so the job survives the time
       # it takes to review and approve the request during a release.
       - name: Submit Windows installers to SignPath
-        if: matrix.platform == 'windows-latest' && startsWith(github.ref, 'refs/tags/') && steps.windows-signing.outputs.enabled == 'true'
+        if: matrix.platform == 'windows-latest' && steps.windows-signing.outputs.enabled == 'true'
         uses: signpath/github-action-submit-signing-request@v3
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
@@ -365,10 +373,11 @@ jobs:
           output-artifact-directory: 'signed'
 
       - name: Re-sign updater and upload signed Windows installers
-        if: matrix.platform == 'windows-latest' && startsWith(github.ref, 'refs/tags/') && steps.windows-signing.outputs.enabled == 'true'
+        if: matrix.platform == 'windows-latest' && steps.windows-signing.outputs.enabled == 'true'
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: v${{ steps.version.outputs.value }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
@@ -384,7 +393,7 @@ jobs:
           }
           Copy-Item $signedExe $env:EXE_REAL_PATH -Force
           Copy-Item $signedMsi $env:MSI_REAL_PATH -Force
-          gh release upload $env:GITHUB_REF_NAME `
+          gh release upload $env:RELEASE_TAG `
             $env:EXE_REAL_PATH $env:MSI_REAL_PATH `
             --clobber --repo $env:GITHUB_REPOSITORY
 
@@ -396,7 +405,7 @@ jobs:
             Remove-Item "$($env:MSI_REAL_PATH).sig" -ErrorAction SilentlyContinue
             pnpm tauri signer sign $env:EXE_REAL_PATH
             pnpm tauri signer sign $env:MSI_REAL_PATH
-            gh release upload $env:GITHUB_REF_NAME `
+            gh release upload $env:RELEASE_TAG `
               "$($env:EXE_REAL_PATH).sig" "$($env:MSI_REAL_PATH).sig" `
               --clobber --repo $env:GITHUB_REPOSITORY
           } else {
@@ -411,7 +420,7 @@ jobs:
   # regenerated over the Authenticode-signed installers.
   patch-updater-manifest:
     needs: publish-tauri
-    if: startsWith(github.ref, 'refs/tags/') && needs.publish-tauri.outputs.updater_signing == 'true'
+    if: needs.publish-tauri.outputs.updater_signing == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -419,9 +428,10 @@ jobs:
       - name: Patch latest.json with re-signed AppImage and Windows signatures
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: v${{ needs.publish-tauri.outputs.version }}
         run: |
           set -euo pipefail
-          TAG="${GITHUB_REF_NAME}"
+          TAG="$RELEASE_TAG"
 
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
             --pattern "latest.json" \
