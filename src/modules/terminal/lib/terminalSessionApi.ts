@@ -1,4 +1,5 @@
 import {
+  clearGhosttySelection,
   clearGhosttySession,
   disposeGhosttySession,
   focusGhosttySession,
@@ -55,6 +56,10 @@ export function leafCwd(leafId: number): string | null {
 
 export function leafGridSelection(leafId: number): string | null {
   return ghosttySelectionForLeaf(leafId);
+}
+
+export function clearLeafSelection(leafId: number): boolean {
+  return clearGhosttySelection(leafId);
 }
 
 export function clearFocusedTerminal(): boolean {

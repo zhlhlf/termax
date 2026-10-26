@@ -1,5 +1,5 @@
 import { writeTerminalClipboard } from "./terminalClipboard";
-import { leafGridSelection } from "./terminalSessionApi";
+import { clearLeafSelection, leafGridSelection } from "./terminalSessionApi";
 
 /**
  * A program that owns the mouse expects the click itself, so the host only
@@ -18,6 +18,7 @@ export async function copyTerminalSelection(leafId: number): Promise<boolean> {
   if (!selection) return false;
   try {
     await writeTerminalClipboard(selection);
+    clearLeafSelection(leafId);
     return true;
   } catch {
     return false;

@@ -88,5 +88,6 @@ export interface TerminalSurface {
   setFocused(focused: boolean): void;
   setVisible(visible: boolean): void;
   getSelection(): string | null;
+  clearSelection(): boolean;
   dispose(): void;
 }

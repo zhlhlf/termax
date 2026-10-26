@@ -88,6 +88,32 @@ const GhosttyTerminalPane = memo(
       return () => cancelAnimationFrame(id);
     }, [resolvedMode, activeTheme, session]);
 
+    useEffect(() => {
+      const target = containerRef.current;
+      if (!target) return;
+      const handlePointerDown = (event: PointerEvent) => {
+        if (
+          event.button !== 2 ||
+          !shouldHandleTerminalRightClick(
+            event,
+            session.model?.modes().mouseTracking ?? false,
+          )
+        )
+          return;
+        event.preventDefault();
+        void copyTerminalSelection(leafId);
+      };
+      const handleContextMenu = (event: MouseEvent) => {
+        event.preventDefault();
+      };
+      target.addEventListener("pointerdown", handlePointerDown, true);
+      target.addEventListener("contextmenu", handleContextMenu);
+      return () => {
+        target.removeEventListener("pointerdown", handlePointerDown, true);
+        target.removeEventListener("contextmenu", handleContextMenu);
+      };
+    }, [leafId, session.model]);
+
     useImperativeHandle(
       ref,
       () => ({
@@ -105,17 +131,6 @@ const GhosttyTerminalPane = memo(
         style={{
           visibility: visible ? "visible" : "hidden",
           pointerEvents: visible ? "auto" : "none",
-        }}
-        onContextMenuCapture={(event) => {
-          event.preventDefault();
-          if (
-            !shouldHandleTerminalRightClick(
-              event,
-              session.model?.modes().mouseTracking ?? false,
-            )
-          )
-            return;
-          void copyTerminalSelection(leafId);
         }}
         data-terminal-backend={backend}
       >

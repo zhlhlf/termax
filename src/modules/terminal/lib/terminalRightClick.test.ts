@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./terminalSessionApi", () => ({ leafGridSelection: vi.fn() }));
+vi.mock("./terminalSessionApi", () => ({
+  clearLeafSelection: vi.fn(),
+  leafGridSelection: vi.fn(),
+}));
 vi.mock("./terminalClipboard", () => ({ writeTerminalClipboard: vi.fn() }));
 
 import { writeTerminalClipboard } from "./terminalClipboard";
@@ -8,13 +11,14 @@ import {
   copyTerminalSelection,
   shouldHandleTerminalRightClick,
 } from "./terminalRightClick";
-import { leafGridSelection } from "./terminalSessionApi";
+import { clearLeafSelection, leafGridSelection } from "./terminalSessionApi";
 
 function contextClick(overrides: Partial<MouseEvent> = {}) {
   return { defaultPrevented: false, shiftKey: false, ...overrides };
 }
 
 const selection = vi.mocked(leafGridSelection);
+const clearSelection = vi.mocked(clearLeafSelection);
 const writeClipboard = vi.mocked(writeTerminalClipboard);
 
 describe("terminal right-click", () => {
@@ -51,6 +55,7 @@ describe("terminal right-click", () => {
 
     await expect(copyTerminalSelection(7)).resolves.toBe(true);
     expect(writeClipboard).toHaveBeenCalledWith("selected output");
+    expect(clearSelection).toHaveBeenCalledWith(7);
   });
 
   it("does not touch the clipboard without a selection", async () => {
@@ -58,5 +63,14 @@ describe("terminal right-click", () => {
 
     await expect(copyTerminalSelection(7)).resolves.toBe(false);
     expect(writeClipboard).not.toHaveBeenCalled();
+    expect(clearSelection).not.toHaveBeenCalled();
+  });
+
+  it("keeps the selection when the clipboard write fails", async () => {
+    selection.mockReturnValue("selected output");
+    writeClipboard.mockRejectedValue(new Error("clipboard unavailable"));
+
+    await expect(copyTerminalSelection(7)).resolves.toBe(false);
+    expect(clearSelection).not.toHaveBeenCalled();
   });
 });

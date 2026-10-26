@@ -416,6 +416,10 @@ export class WebGpuTerminalSurface
     return this.selection.text();
   }
 
+  clearSelection(): boolean {
+    return this.selection.clear();
+  }
+
   searchController(): GhosttySearchController {
     return this.search;
   }
@@ -621,10 +625,7 @@ export class WebGpuTerminalSurface
       true,
     );
     this.root.removeEventListener("pointerup", this.handleLinkPointerUp, true);
-    this.root.removeEventListener(
-      "pointerleave",
-      this.handleLinkPointerLeave,
-    );
+    this.root.removeEventListener("pointerleave", this.handleLinkPointerLeave);
     this.root.removeEventListener("keydown", this.handleLinkModifierChange);
     this.root.removeEventListener("keyup", this.handleLinkModifierChange);
     this.scrollbar.removeEventListener("scroll", this.handleScroll);

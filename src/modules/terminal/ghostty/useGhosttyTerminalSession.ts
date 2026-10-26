@@ -324,6 +324,15 @@ export function ghosttySelectionForLeaf(leafId: number): string | null {
   return sessions.get(leafId)?.surface?.getSelection() ?? null;
 }
 
+export function clearGhosttySelection(leafId: number): boolean {
+  const session = sessions.get(leafId);
+  if (!session || session.disposed) return false;
+  if (session.surface) return session.surface.clearSelection();
+  if (!session.model) return false;
+  session.model.setSelection?.(null);
+  return true;
+}
+
 export function ghosttyCwdForLeaf(leafId: number): string | null {
   return sessions.get(leafId)?.lastCwd ?? null;
 }
