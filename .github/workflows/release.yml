@@ -184,7 +184,7 @@ jobs:
           releaseName: v${{ steps.version.outputs.value }}
           releaseBody: "See the assets to download and install. Auto-update is built in."
           releaseDraft: false
-          prerelease: false
+          prerelease: true
           args: ${{ matrix.args }}
 
       - id: tauri-without-updater
@@ -201,7 +201,7 @@ jobs:
           releaseName: v${{ steps.version.outputs.value }}
           releaseBody: "See the assets to download and install. Auto-update is built in."
           releaseDraft: false
-          prerelease: false
+          prerelease: true
           args: ${{ matrix.args }} --config '{"bundle":{"createUpdaterArtifacts":false}}'
 
       # Portable Windows build: the install layout minus the uninstaller, zipped
