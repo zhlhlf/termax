@@ -1,4 +1,4 @@
-import { IS_MAC, MOD_PROP } from "@/lib/platform";
+import { IS_MAC, IS_WINDOWS, MOD_PROP } from "@/lib/platform";
 
 /**
  * Single source of truth for keyboard shortcuts.
@@ -63,6 +63,13 @@ export type Shortcut = {
   allowRepeat?: boolean;
 };
 
+export function tabDefaultBindings(
+  key: "t" | "w",
+  windows = IS_WINDOWS,
+): KeyBinding[] {
+  return windows ? [{ alt: true, key }] : [{ [MOD_PROP]: true, key }];
+}
+
 export const SHORTCUTS: Shortcut[] = [
   {
     id: "commandPalette.open",
@@ -86,7 +93,7 @@ export const SHORTCUTS: Shortcut[] = [
     id: "tab.new",
     label: "shortcut.tab.new",
     group: "Tabs",
-    defaultBindings: [{ [MOD_PROP]: true, key: "t" }],
+    defaultBindings: tabDefaultBindings("t"),
   },
   {
     id: "tab.newPreview",
@@ -99,7 +106,7 @@ export const SHORTCUTS: Shortcut[] = [
     id: "tab.close",
     label: "shortcut.tab.close",
     group: "Tabs",
-    defaultBindings: [{ [MOD_PROP]: true, key: "w" }],
+    defaultBindings: tabDefaultBindings("w"),
   },
   {
     id: "pane.splitRight",

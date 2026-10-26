@@ -5,6 +5,7 @@ import {
   type KeyBinding,
   matchBinding,
   SHORTCUTS,
+  tabDefaultBindings,
 } from "./shortcuts";
 
 // These tests run in the vitest node environment, where the Tauri OS plugin is
@@ -135,6 +136,11 @@ describe("matchBinding", () => {
 });
 
 describe("SHORTCUTS registry", () => {
+  it("uses Alt+T and Alt+W for tabs on Windows", () => {
+    expect(tabDefaultBindings("t", true)).toEqual([{ alt: true, key: "t" }]);
+    expect(tabDefaultBindings("w", true)).toEqual([{ alt: true, key: "w" }]);
+  });
+
   it("binds Mod+S to editor.save", () => {
     const save = SHORTCUTS.find((s) => s.id === "editor.save");
     expect(save).toBeDefined();
