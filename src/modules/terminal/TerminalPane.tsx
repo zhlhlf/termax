@@ -1,7 +1,3 @@
-import {
-  ContextMenu,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
 import { useT } from "@/lib/i18n";
 import { usePreferencesStore } from "@/modules/settings/preferences";
 import type { TerminalSearchController } from "@/modules/terminal/search/TerminalSearchController";
@@ -18,14 +14,11 @@ import {
 } from "react";
 import type { TerminalBackendKind } from "./backend/contracts";
 import { resolvedTerminalBackend } from "./backend/selection";
+import { useGhosttyTerminalSession } from "./ghostty/useGhosttyTerminalSession";
 import {
-  useGhosttyTerminalSession,
-} from "./ghostty/useGhosttyTerminalSession";
-import { leafGridSelection } from "./lib/terminalSessionApi";
-import {
-  shouldOpenTerminalContextMenu,
-  TerminalContextMenu,
-} from "./TerminalContextMenu";
+  copyTerminalSelection,
+  shouldHandleTerminalRightClick,
+} from "./lib/terminalRightClick";
 
 export type TerminalPaneHandle = {
   write: (data: string) => void;
@@ -75,7 +68,6 @@ const GhosttyTerminalPane = memo(
       (state) => state.terminalScreenReader,
     );
     const containerRef = useRef<HTMLDivElement>(null);
-    const [canCopySelection, setCanCopySelection] = useState(false);
     const { resolvedMode, activeTheme } = useTheme();
     const session = useGhosttyTerminalSession({
       leafId,
@@ -108,76 +100,66 @@ const GhosttyTerminalPane = memo(
     );
 
     return (
-      <ContextMenu>
-        <ContextMenuTrigger asChild>
+      <div
+        className="zoom-exempt relative h-full w-full overflow-hidden"
+        style={{
+          visibility: visible ? "visible" : "hidden",
+          pointerEvents: visible ? "auto" : "none",
+        }}
+        onContextMenuCapture={(event) => {
+          event.preventDefault();
+          if (
+            !shouldHandleTerminalRightClick(
+              event,
+              session.model?.modes().mouseTracking ?? false,
+            )
+          )
+            return;
+          void copyTerminalSelection(leafId);
+        }}
+        data-terminal-backend={backend}
+      >
+        <div ref={containerRef} className="absolute inset-0" />
+        {screenReader && session.model && (
+          <Suspense fallback={null}>
+            <TerminalAccessibleOutput
+              model={session.model}
+              visible={visible}
+              focused={focused}
+              onExit={session.focus}
+            />
+          </Suspense>
+        )}
+        {session.error && (
           <div
-            ref={containerRef}
-            className="zoom-exempt relative h-full w-full overflow-hidden"
-            style={{
-              visibility: visible ? "visible" : "hidden",
-              pointerEvents: visible ? "auto" : "none",
-            }}
-            onContextMenuCapture={(event) => {
-              if (
-                !shouldOpenTerminalContextMenu(
-                  event,
-                  session.model?.modes().mouseTracking ?? false,
-                )
-              ) {
-                event.preventDefault();
-                return;
-              }
-              // Read here rather than in TerminalContextMenu: opening the menu
-              // does not re-render this pane, so a render-time read would report
-              // whatever selection existed when the pane last rendered.
-              setCanCopySelection(leafGridSelection(leafId) !== null);
-            }}
-            data-terminal-backend={backend}
+            role="alert"
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background p-6 text-center text-sm"
           >
-            <div ref={containerRef} className="absolute inset-0" />
-            {screenReader && session.model && (
-              <Suspense fallback={null}>
-                <TerminalAccessibleOutput
-                  model={session.model}
-                  visible={visible}
-                  focused={focused}
-                  onExit={session.focus}
-                />
-              </Suspense>
+            <strong>
+              {session.error.kind === "renderer"
+                ? t("terminal.error.display")
+                : t("terminal.error.start")}
+            </strong>
+            <p className="max-w-md break-words text-muted-foreground">
+              {session.error.message}
+            </p>
+            {session.error.kind === "renderer" && (
+              <p className="text-muted-foreground">
+                {t("terminal.error.preserved")}
+              </p>
             )}
-            {session.error && (
-              <div
-                role="alert"
-                className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background p-6 text-center text-sm"
-              >
-                <strong>
-                  {session.error.kind === "renderer"
-                    ? t("terminal.error.display")
-                    : t("terminal.error.start")}
-                </strong>
-                <p className="max-w-md break-words text-muted-foreground">
-                  {session.error.message}
-                </p>
-                {session.error.kind === "renderer" && (
-                  <p className="text-muted-foreground">
-                    {t("terminal.error.preserved")}
-                  </p>
-                )}
-                <button
-                  type="button"
-                  className="rounded-md border px-3 py-1.5 hover:bg-accent focus-visible:outline-2"
-                  onClick={session.retry}
-                >
-                  {session.error.kind === "renderer"
-                    ? t("terminal.error.retryDisplay")
-                    : t("terminal.error.retry")}
-                </button>
-              </div>
-            )}
+            <button
+              type="button"
+              className="rounded-md border px-3 py-1.5 hover:bg-accent focus-visible:outline-2"
+              onClick={session.retry}
+            >
+              {session.error.kind === "renderer"
+                ? t("terminal.error.retryDisplay")
+                : t("terminal.error.retry")}
+            </button>
           </div>
-        </ContextMenuTrigger>
-        <TerminalContextMenu leafId={leafId} canCopy={canCopySelection} />
-      </ContextMenu>
+        )}
+      </div>
     );
   }),
 );

@@ -520,10 +520,6 @@ export const en = {
   "terminal.outputPaused.stalled":
     "Waiting for the terminal connection. Delivery will resume automatically.",
   "terminal.outputPaused.retry": "Retry",
-  "terminal.menu.copy": "Copy",
-  "terminal.menu.paste": "Paste",
-  "terminal.menu.selectAll": "Select All",
-  "terminal.menu.clear": "Clear",
 
   // ── Editor ──
   "editor.search.find": "Find",

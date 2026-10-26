@@ -509,10 +509,6 @@ export const zhCN: Record<keyof typeof en, string> = {
   "terminal.outputPaused.failed": "终端无法处理输出。请重新打开此终端以恢复。",
   "terminal.outputPaused.stalled": "正在等待终端连接。连接后将自动恢复传输。",
   "terminal.outputPaused.retry": "重试",
-  "terminal.menu.copy": "复制",
-  "terminal.menu.paste": "粘贴",
-  "terminal.menu.selectAll": "全选",
-  "terminal.menu.clear": "清屏",
 
   // ── Editor ──
   "editor.search.find": "查找",
