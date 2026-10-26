@@ -183,7 +183,7 @@ jobs:
           tagName: v${{ steps.version.outputs.value }}
           releaseName: v${{ steps.version.outputs.value }}
           releaseBody: "See the assets to download and install. Auto-update is built in."
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
 
@@ -200,7 +200,7 @@ jobs:
           tagName: v${{ steps.version.outputs.value }}
           releaseName: v${{ steps.version.outputs.value }}
           releaseBody: "See the assets to download and install. Auto-update is built in."
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }} --config '{"bundle":{"createUpdaterArtifacts":false}}'
 
