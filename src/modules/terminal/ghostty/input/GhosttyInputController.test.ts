@@ -3,7 +3,9 @@ import { readFile } from "node:fs/promises";
 import { TeraxGhostty } from "@terax/ghostty-core/adapted";
 import { describe, expect, it, vi } from "vitest";
 import {
+  controlEnterSequence,
   GhosttyInputController,
+  legacyWindowsKeySequence,
   terminalMouseModifiers,
 } from "./GhosttyInputController";
 
@@ -26,6 +28,122 @@ describe("terminalMouseModifiers", () => {
 });
 
 describe("GhosttyInputController", () => {
+  it.each([
+    ["ArrowUp", false, "\x1b[A"],
+    ["ArrowDown", false, "\x1b[B"],
+    ["ArrowRight", false, "\x1b[C"],
+    ["ArrowLeft", false, "\x1b[D"],
+    ["ArrowUp", true, "\x1bOA"],
+  ] as const)(
+    "encodes %s with legacy keypad mode %s",
+    (code, applicationCursorKeys, sequence) => {
+      expect(
+        new TextDecoder().decode(
+          legacyWindowsKeySequence(
+            {
+              altKey: false,
+              code,
+              ctrlKey: false,
+              metaKey: false,
+              shiftKey: false,
+            },
+            applicationCursorKeys,
+          ) ?? new Uint8Array(),
+        ),
+      ).toBe(sequence);
+    },
+  );
+
+  it("turns Ctrl+Enter into a plain Enter on every platform", () => {
+    expect(
+      new TextDecoder().decode(
+        controlEnterSequence({
+          altKey: false,
+          code: "Enter",
+          ctrlKey: true,
+          metaKey: false,
+          shiftKey: false,
+        }) ?? new Uint8Array(),
+      ),
+    ).toBe("\r");
+  });
+
+  it("keeps Ctrl+Shift+Enter as the newline-compatible sequence", () => {
+    expect(
+      new TextDecoder().decode(
+        controlEnterSequence({
+          altKey: false,
+          code: "Enter",
+          ctrlKey: true,
+          metaKey: false,
+          shiftKey: true,
+        }) ?? new Uint8Array(),
+      ),
+    ).toBe("\x1b\r");
+  });
+
+  it("handles Ctrl+Enter without Windows legacy arrow handling", () => {
+    const input = new FakeTextArea();
+    const onData = vi.fn();
+    const encodeKey = vi.fn(() => new Uint8Array([99]));
+    const controller = new GhosttyInputController({
+      model: { ...inputModel(), encodeKey },
+      input: input as unknown as HTMLTextAreaElement,
+      pointerTarget: new FakeElement() as unknown as HTMLElement,
+      cellSize: () => ({ width: 10, height: 20 }),
+      isMac: true,
+      onCopy: () => false,
+      onData,
+    });
+    try {
+      input.dispatchEvent(
+        keyboardEvent({ key: "Enter", code: "Enter", ctrlKey: true }),
+      );
+      expect(new TextDecoder().decode(onData.mock.calls[0][0])).toBe("\r");
+      expect(encodeKey).not.toHaveBeenCalled();
+    } finally {
+      controller.dispose();
+    }
+  });
+
+  it("uses legacy arrows on Windows without asking the core for kitty sequences", () => {
+    const input = new FakeTextArea();
+    const onData = vi.fn();
+    const encodeKey = vi.fn(() => new Uint8Array([99]));
+    const controller = new GhosttyInputController({
+      model: {
+        ...inputModel((mode) => mode === 1),
+        encodeKey,
+      },
+      input: input as unknown as HTMLTextAreaElement,
+      pointerTarget: new FakeElement() as unknown as HTMLElement,
+      cellSize: () => ({ width: 10, height: 20 }),
+      isMac: false,
+      useLegacyWindowsKeys: true,
+      onCopy: () => false,
+      onData,
+    });
+    try {
+      input.dispatchEvent(keyboardEvent({ key: "ArrowUp", code: "ArrowUp" }));
+      input.dispatchEvent(
+        keyboardEvent({
+          key: "ArrowDown",
+          code: "ArrowDown",
+          shiftKey: true,
+        }),
+      );
+      input.dispatchEvent(
+        keyboardEvent({ key: "Enter", code: "Enter", ctrlKey: true }),
+      );
+      expect(
+        onData.mock.calls.map(([bytes]) => new TextDecoder().decode(bytes)),
+      ).toEqual(["\x1bOA", "\x1b[1;2B", "\r"]);
+      expect(encodeKey).not.toHaveBeenCalled();
+    } finally {
+      controller.dispose();
+    }
+  });
+
   it.each(["ghostty-vt.wasm", "ghostty-vt-scalar.wasm"])(
     "leaves macOS Command shortcuts to the application in legacy and Kitty modes (%s)",
     async (artifact) => {

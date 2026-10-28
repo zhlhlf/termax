@@ -138,6 +138,7 @@ export type GhosttyInputControllerOptions = {
   readonly onKeyDown?: (event: KeyboardEvent) => boolean;
   readonly macOptionIsMeta?: boolean;
   readonly isMac?: boolean;
+  readonly useLegacyWindowsKeys?: boolean;
 };
 
 export class GhosttyInputController {
@@ -283,6 +284,25 @@ export class GhosttyInputController {
 
     const key = KEY_MAP[event.code];
     if (key === undefined) return;
+    const controlEnter = controlEnterSequence(event);
+    if (controlEnter) {
+      consume(event);
+      this.options.model.scrollToBottom();
+      this.sendInput(controlEnter, "keydown", event.repeat);
+      return;
+    }
+    if (this.options.useLegacyWindowsKeys) {
+      const legacy = legacyWindowsKeySequence(
+        event,
+        this.options.model.mode(1),
+      );
+      if (legacy) {
+        consume(event);
+        this.options.model.scrollToBottom();
+        this.sendInput(legacy, "keydown", event.repeat);
+        return;
+      }
+    }
     const encoded = this.encodeKeyDown(event, key);
     if (encoded.byteLength > 0) {
       consume(event);
@@ -628,6 +648,49 @@ function modifiers(event: KeyboardEvent): Mods {
   if (event.getModifierState("CapsLock")) result |= Mods.CAPSLOCK;
   if (event.getModifierState("NumLock")) result |= Mods.NUMLOCK;
   return result;
+}
+
+const ARROW_FINALS: Readonly<Record<string, string>> = {
+  ArrowDown: "B",
+  ArrowLeft: "D",
+  ArrowRight: "C",
+  ArrowUp: "A",
+};
+
+const arrowEncoder = new TextEncoder();
+
+type LegacyKeyEvent = Pick<
+  KeyboardEvent,
+  "altKey" | "code" | "ctrlKey" | "metaKey" | "shiftKey"
+>;
+
+/** Windows ConPTY does not reliably forward enhanced key sequences to child
+ * processes such as ssh. Use the xterm sequences every TUI understands. */
+export function legacyWindowsKeySequence(
+  event: LegacyKeyEvent,
+  applicationCursorKeys: boolean,
+): Uint8Array | null {
+  const final = ARROW_FINALS[event.code];
+  if (!final || event.metaKey) return null;
+  const modifier =
+    1 +
+    (event.shiftKey ? 1 : 0) +
+    (event.altKey ? 2 : 0) +
+    (event.ctrlKey ? 4 : 0);
+  const sequence =
+    modifier === 1
+      ? `\x1b${applicationCursorKeys ? "O" : "["}${final}`
+      : `\x1b[1;${modifier}${final}`;
+  return arrowEncoder.encode(sequence);
+}
+
+/** Some SSH TUIs leave xterm modifyOtherKeys enabled and then print the
+ * `CSI 27;5;13~` fallback as text. Ctrl+Enter has no portable distinction from
+ * Enter, so send the legacy byte directly on every platform. */
+export function controlEnterSequence(event: LegacyKeyEvent): Uint8Array | null {
+  if (event.code !== "Enter" || !event.ctrlKey || event.altKey || event.metaKey)
+    return null;
+  return arrowEncoder.encode(event.shiftKey ? "\x1b\r" : "\r");
 }
 
 function isCopyShortcut(event: KeyboardEvent, isMac: boolean): boolean {

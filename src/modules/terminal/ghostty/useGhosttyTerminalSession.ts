@@ -3,6 +3,7 @@ import { initializeSessionGeneration as startSessionInitialization } from "@/mod
 import { replaceSessionSurface } from "@/modules/terminal/ghostty/replaceSessionSurface";
 import { openExternalUrl } from "@/lib/external-link";
 import { ensureMonoFontsLoaded, resolveFontFamily } from "@/lib/fonts";
+import { IS_WINDOWS } from "@/lib/platform";
 import { usePreferencesStore } from "@/modules/settings/preferences";
 import type { TerminalBackendKind } from "@/modules/terminal/backend/contracts";
 import { PtyResizeScheduler } from "@/modules/terminal/lib/ptyResizeScheduler";
@@ -822,6 +823,7 @@ function createGhosttyInput(
       height: surface.cellSize().height,
     }),
     onData: (bytes) => session.writer.enqueue(bytes),
+    useLegacyWindowsKeys: IS_WINDOWS,
     onCopy: () => {
       const text = surface.getSelection();
       if (!text) return false;
