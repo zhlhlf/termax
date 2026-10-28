@@ -1,19 +1,15 @@
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { useEffect } from "react";
-import { useTerminalDropStore } from "./dropStore";
 import { formatDroppedPaths } from "./quoteShellPath";
 import { pasteIntoSession } from "./terminalSessionApi";
 
 export type TerminalPathDropTarget = {
-  updateTarget: (clientX: number, clientY: number) => boolean;
   dropPath: (paths: string[], clientX: number, clientY: number) => boolean;
-  clearTarget: () => void;
 };
 
 type TerminalPathDropDeps = {
   leafIdAtPoint: (clientX: number, clientY: number) => number | null;
   paste: (leafId: number, text: string) => boolean;
-  setTarget: (leafId: number | null) => void;
 };
 
 // Tauri reports the drop point in physical pixels on some platforms and logical
@@ -36,23 +32,13 @@ function leafIdAt(x: number, y: number): number | null {
 export function createTerminalPathDropTarget({
   leafIdAtPoint,
   paste,
-  setTarget,
 }: TerminalPathDropDeps): TerminalPathDropTarget {
   return {
-    updateTarget(clientX, clientY) {
-      const leafId = leafIdAtPoint(clientX, clientY);
-      setTarget(leafId);
-      return leafId !== null;
-    },
     dropPath(paths, clientX, clientY) {
-      setTarget(null);
       const leafId = leafIdAtPoint(clientX, clientY);
       if (leafId === null) return false;
       paste(leafId, formatDroppedPaths(paths));
       return true;
-    },
-    clearTarget() {
-      setTarget(null);
     },
   };
 }
@@ -60,37 +46,20 @@ export function createTerminalPathDropTarget({
 const terminalPathDropTarget = createTerminalPathDropTarget({
   leafIdAtPoint: leafIdAt,
   paste: pasteIntoSession,
-  setTarget: (leafId) => useTerminalDropStore.getState().setTarget(leafId),
 });
 
-/** Wires native OS file drops into the terminal pane under the cursor: shows a
- * drop overlay on that pane while dragging, and bracketed-pastes the
- * shell-quoted path(s) on drop. Drops outside any terminal leaf are ignored. */
-export function useTerminalFileDrop(): TerminalPathDropTarget {
+/** Wires native OS file drops into the terminal pane under the cursor and
+ * bracketed-pastes the shell-quoted path(s) on drop. */
+export function useTerminalFileDrop(): void {
   useEffect(() => {
     let disposed = false;
     let unlisten: (() => void) | null = null;
-    const setTarget = useTerminalDropStore.getState().setTarget;
 
     void getCurrentWebview()
       .onDragDropEvent((e) => {
         const p = e.payload;
-        if (p.type === "enter" || p.type === "over") {
-          setTarget(leafIdAt(p.position.x, p.position.y));
-          return;
-        }
-        if (p.type === "leave") {
-          setTarget(null);
-          return;
-        }
-        if (p.type === "drop") {
-          setTarget(null);
-          if (!p.paths.length) return;
-          const leafId = leafIdAt(p.position.x, p.position.y);
-          if (leafId !== null) {
-            pasteIntoSession(leafId, formatDroppedPaths(p.paths));
-          }
-        }
+        if (p.type !== "drop" || !p.paths.length) return;
+        terminalPathDropTarget.dropPath(p.paths, p.position.x, p.position.y);
       })
       .then((fn) => {
         if (disposed) fn();
@@ -100,10 +69,7 @@ export function useTerminalFileDrop(): TerminalPathDropTarget {
 
     return () => {
       disposed = true;
-      setTarget(null);
       unlisten?.();
     };
   }, []);
-
-  return terminalPathDropTarget;
 }

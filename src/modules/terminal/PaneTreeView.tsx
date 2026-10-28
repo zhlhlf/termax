@@ -5,7 +5,6 @@ import {
 } from "@/components/ui/resizable";
 import type { TerminalSearchController } from "@/modules/terminal/search/TerminalSearchController";
 import { Fragment, useCallback, useEffect, useRef } from "react";
-import { useTerminalDropStore } from "./lib/dropStore";
 import { firstLeafSlotId, type PaneNode } from "./lib/panes";
 import {
   beginTerminalResizeInteraction,
@@ -57,7 +56,6 @@ export function PaneTreeView(props: Props) {
           onCwd={b.onCwd}
           onExit={b.onExit}
         />
-        <DropOverlay leafId={node.id} />
       </div>
     );
   }
@@ -130,15 +128,5 @@ function TerminalResizableHandle() {
       }}
       onBlur={finish}
     />
-  );
-}
-
-function DropOverlay({ leafId }: { leafId: number }) {
-  const active = useTerminalDropStore((s) => s.targetLeafId === leafId);
-  if (!active) return null;
-  return (
-    <div className="pointer-events-none absolute inset-2 grid place-items-center rounded-lg border border-primary/45 bg-background/70 text-xs font-medium text-foreground shadow-lg backdrop-blur-sm">
-      Drop file path here
-    </div>
   );
 }

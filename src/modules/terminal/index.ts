@@ -19,9 +19,6 @@ export {
   writeToSession,
 } from "./lib/terminalSessionApi";
 export { isTerminalSurfaceTarget } from "./lib/terminalSurfaceTarget";
-export {
-  type TerminalPathDropTarget,
-  useTerminalFileDrop,
-} from "./lib/useTerminalFileDrop";
+export { useTerminalFileDrop } from "./lib/useTerminalFileDrop";
 export { TerminalPane, type TerminalPaneHandle } from "./TerminalPane";
 export { TerminalStack } from "./TerminalStack";
